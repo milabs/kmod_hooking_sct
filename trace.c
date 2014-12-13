@@ -1,3 +1,4 @@
+#include <linux/slab.h>
 #include <linux/sched.h>
 #include <linux/compat.h>
 
@@ -9,10 +10,24 @@
 # define IS_IA32		0
 #endif
 
+#ifndef __NR_ia32_open
+# define __NR_ia32_open		__NR_open
+#endif
+
 static void trace_syscall_entry(int arch, unsigned long major, \
 	unsigned long a0, unsigned long a1, unsigned long a2, unsigned long a3)
 {
-	/* TODO: add more code here */
+	char *filename = NULL;
+
+	if (major == __NR_open || major == __NR_ia32_open) {
+		filename = kmalloc(PATH_MAX, GFP_KERNEL);
+		if (!filename || strncpy_from_user(filename, (const void __user *)a0, PATH_MAX) < 0)
+			goto out;
+		printk("%s open(%s) [%s]\n", arch ? "X86_64" : "I386", filename, current->comm);
+	}
+
+out:
+	if (filename) kfree(filename);
 }
 
 void ServiceTraceEnter(struct pt_regs *regs)
