@@ -56,7 +56,6 @@ static void *x86_get_isr(int vec)
 	x86_idt_desc_t desc;
 	unsigned long address;
 
-	/* NOTE: this will fail on VirtualBox */
 	asm volatile("sidt %0" : "=m"(reg));
 
 	memcpy(&desc, reg.base + vec * sizeof(desc), sizeof(desc));
